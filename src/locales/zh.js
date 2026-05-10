@@ -43,7 +43,9 @@ export default {
     skippedLine: '已顺延 {n} 天',
     themeDark: '深色',
     themeLight: '浅色',
+    themeSystemWithAppearance: '跟随系统（当前{appearance}）',
     themeTitle: '主题：{name}',
+    themeCycleHint: '点击切换：浅色 → 深色 → 跟随系统',
     langSwitchToEn: 'English',
     langSwitchToZh: '中文',
   },
@@ -195,7 +197,7 @@ export default {
 • blocks：数组；可为空表示尚未配置路线；非空时每项为一个阶段对象（顺序即路线顺序）
 • completed：对象，键为 "YYYY-MM-DD"，值为 { duration, note? }；新计划可为 {}
 • autoPostponed：对象，键为日期字符串，值为 true；新计划可为 {}
-• theme：字符串 "light" 或 "dark"
+• theme：字符串 "light"、"dark" 或 "system"（跟随系统深浅色）
 
 阶段对象 blocks[] 常用字段：
 • id：字符串，唯一，建议 "b_" 前缀 + 随机字符

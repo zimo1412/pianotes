@@ -3,15 +3,15 @@
  * Domain logic under src/piano/; tab screens under src/piano/screens/.
  */
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { Edit3, TrendingUp, Music, X, Plus, Minus, Flame, Moon, Sun, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo, useSyncExternalStore } from 'react';
+import { Edit3, TrendingUp, Music, X, Plus, Minus, Flame, Moon, Sun, AlertCircle, Monitor } from 'lucide-react';
 import { practiceStorage } from './storage.js';
 import { useI18n } from './locales/I18nProvider.jsx';
 import { DEFAULT_BLOCKS, PRACTICE_LOG_DURATION_STEP } from './piano/constants.js';
 import { normalizeBlock, normalizeBlocks } from './piano/blockModel.js';
 import { getPracticeDayAnchor, getDateString, daysBetween, getDeadlineForPracticeDayKey, parseLocalDayFromKey } from './piano/dateAnchors.js';
 import { getFocusForToday, clampGlobalWeek, defaultLogMinutesFromTodayInfo, calculateStreak } from './piano/routeFocus.js';
-import { normalizeTheme } from './piano/theme.js';
+import { getSystemPrefersDarkSnapshot, normalizeTheme, subscribeSystemPrefersDark } from './piano/theme.js';
 import {
   buildPracticeArchive,
   buildAiPlanTemplateArchive,
@@ -41,7 +41,7 @@ export default function PianoApp() {
   const [practiceLogMode, setPracticeLogMode] = useState('create');
   const [logDuration, setLogDuration] = useState(90);
   const [logNote, setLogNote] = useState('');
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('system');
   const [autoMsg, setAutoMsg] = useState(0);
   const [manualWeekOverride, setManualWeekOverride] = useState(null);
   const archiveImportRef = useRef(null);
@@ -55,7 +55,9 @@ export default function PianoApp() {
     null,
   );
 
-  const isDark = theme === 'dark';
+  const systemPrefersDark = useSyncExternalStore(subscribeSystemPrefersDark, getSystemPrefersDarkSnapshot, () => false);
+  const resolvedTheme = theme === 'system' ? (systemPrefersDark ? 'dark' : 'light') : theme;
+  const isDark = resolvedTheme === 'dark';
   const styles = createAppStyles(isDark);
 
   useEffect(() => {
@@ -363,7 +365,10 @@ export default function PianoApp() {
   }
 
   function cycleTheme() {
-    saveTheme(theme === 'dark' ? 'light' : 'dark');
+    const order = ['light', 'dark', 'system'];
+    const i = order.indexOf(theme);
+    const next = order[(i >= 0 ? i + 1 : 1) % order.length];
+    saveTheme(next);
   }
 
   function applyPlanEditorSave(payload) {
@@ -379,7 +384,14 @@ export default function PianoApp() {
     setPlanEditor(null);
   }
 
-  const themeName = theme === 'dark' ? t('header.themeDark') : t('header.themeLight');
+  const themeName =
+    theme === 'system'
+      ? t('header.themeSystemWithAppearance', {
+          appearance: isDark ? t('header.themeDark') : t('header.themeLight'),
+        })
+      : theme === 'dark'
+        ? t('header.themeDark')
+        : t('header.themeLight');
 
   const headerCornerBtn = {
     width: 36,
@@ -428,8 +440,20 @@ export default function PianoApp() {
             >
               {locale === 'zh' ? 'EN' : '中'}
             </button>
-            <button type="button" onClick={cycleTheme} style={headerCornerBtn} title={t('header.themeTitle', { name: themeName })}>
-              {theme === 'dark' ? <Moon size={20} strokeWidth={2.5} /> : <Sun size={20} strokeWidth={2.5} />}
+            <button
+              type="button"
+              onClick={cycleTheme}
+              style={headerCornerBtn}
+              title={`${t('header.themeTitle', { name: themeName })} · ${t('header.themeCycleHint')}`}
+              aria-label={themeName}
+            >
+              {theme === 'system' ? (
+                <Monitor size={20} strokeWidth={2.5} />
+              ) : isDark ? (
+                <Moon size={20} strokeWidth={2.5} />
+              ) : (
+                <Sun size={20} strokeWidth={2.5} />
+              )}
             </button>
           </div>
         </header>

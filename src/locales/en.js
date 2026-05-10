@@ -44,7 +44,9 @@ export default {
     skippedLine: '{n} day(s) deferred',
     themeDark: 'Dark',
     themeLight: 'Light',
+    themeSystemWithAppearance: 'System — currently {appearance}',
     themeTitle: 'Theme: {name}',
+    themeCycleHint: 'Tap to cycle: light → dark → system',
     langSwitchToEn: 'English',
     langSwitchToZh: '中文',
   },
@@ -198,7 +200,7 @@ Top-level required fields:
 • blocks: array; may be empty (no route); if non-empty each item is a segment (order = route order)
 • completed: object keyed by "YYYY-MM-DD" with { duration, note? }; {} for new plans
 • autoPostponed: object date keys → true; {} for new plans
-• theme: "light" | "dark"
+• theme: "light" | "dark" | "system" (follow OS light/dark)
 
 Each blocks[] segment:
 • id: unique string (e.g. "b_" + random)
