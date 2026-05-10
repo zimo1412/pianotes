@@ -34,7 +34,6 @@ export default {
     ],
   },
   header: {
-    scheduleTitle: '练习日程',
     titleBefore: '练琴',
     titleAccent: '手记',
     weekProgress: '第 {current} / {total} 周',

@@ -34,7 +34,6 @@ export default {
     ],
   },
   header: {
-    scheduleTitle: 'Practice',
     /** Renders as one word “Pianotes”; accent span = red “notes” */
     titleBefore: 'Pia',
     titleAccent: 'notes',

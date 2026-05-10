@@ -412,16 +412,40 @@ export default function PianoApp() {
       <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Noto+Serif+SC:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
       <div style={{ maxWidth: 448, margin: '0 auto', paddingBottom: 96 }}>
-        <header style={{ padding: '40px 24px 20px', borderBottom: `1px solid ${styles.border}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ color: styles.accent, fontSize: 12, letterSpacing: '0.2em', marginBottom: 6, fontFamily: '"Noto Serif SC", serif', fontWeight: 800, lineHeight: 1.25 }}>
-              {t('header.scheduleTitle')}
-            </div>
-            <h1 style={{ ...displayMixedItalic, fontSize: 34, color: styles.text, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.01em' }}>
+        <header style={{ paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: `1px solid ${styles.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+            <h1 style={{ ...displayMixedItalic, flex: 1, minWidth: 0, margin: 0, padding: 0, fontSize: 34, color: styles.text, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.01em' }}>
               {t('header.titleBefore')}
               <span style={{ color: styles.primary }}>{t('header.titleAccent')}</span>
             </h1>
-            <div style={{ marginTop: 10, display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12, color: styles.textFaint, fontFamily: '"Noto Serif SC", serif', fontWeight: 700, letterSpacing: '0.06em', lineHeight: 1.3 }}>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0, paddingTop: 2 }}>
+              <button
+                type="button"
+                onClick={() => void setLocale(locale === 'zh' ? 'en' : 'zh')}
+                style={{ ...headerCornerBtn, fontSize: 12, fontFamily: '"Noto Serif SC", serif', fontWeight: 800, letterSpacing: '0.06em' }}
+                title={locale === 'zh' ? t('header.langSwitchToEn') : t('header.langSwitchToZh')}
+              >
+                {locale === 'zh' ? 'EN' : '中'}
+              </button>
+              <button
+                type="button"
+                onClick={cycleTheme}
+                style={headerCornerBtn}
+                title={`${t('header.themeTitle', { name: themeName })} · ${t('header.themeCycleHint')}`}
+                aria-label={themeName}
+              >
+                {theme === 'system' ? (
+                  <Monitor size={20} strokeWidth={2.5} />
+                ) : isDark ? (
+                  <Moon size={20} strokeWidth={2.5} />
+                ) : (
+                  <Sun size={20} strokeWidth={2.5} />
+                )}
+              </button>
+            </div>
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12, color: styles.textFaint, fontFamily: '"Noto Serif SC", serif', fontWeight: 700, letterSpacing: '0.06em', lineHeight: 1.3 }}>
               <span>{totalWeeks > 0 ? t('header.weekProgress', { current: weekNumber, total: totalWeeks }) : t('header.weekProgressNoPlan')}</span>
               {streak > 0 && (
                 <span style={{ color: styles.accent, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -430,31 +454,6 @@ export default function PianoApp() {
               )}
               {skipDays > 0 && <span style={{ color: styles.accent }}>{t('header.skippedLine', { n: skipDays })}</span>}
             </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={() => void setLocale(locale === 'zh' ? 'en' : 'zh')}
-              style={{ ...headerCornerBtn, fontSize: 12, fontFamily: '"Noto Serif SC", serif', fontWeight: 800, letterSpacing: '0.06em' }}
-              title={locale === 'zh' ? t('header.langSwitchToEn') : t('header.langSwitchToZh')}
-            >
-              {locale === 'zh' ? 'EN' : '中'}
-            </button>
-            <button
-              type="button"
-              onClick={cycleTheme}
-              style={headerCornerBtn}
-              title={`${t('header.themeTitle', { name: themeName })} · ${t('header.themeCycleHint')}`}
-              aria-label={themeName}
-            >
-              {theme === 'system' ? (
-                <Monitor size={20} strokeWidth={2.5} />
-              ) : isDark ? (
-                <Moon size={20} strokeWidth={2.5} />
-              ) : (
-                <Sun size={20} strokeWidth={2.5} />
-              )}
-            </button>
           </div>
         </header>
 
