@@ -182,14 +182,14 @@ export default {
     pasteTitle: '粘贴档案',
     pasteHint:
       '粘贴与「导出备份」相同结构的完整 JSON。若内容包在 ```json 代码块里，无需手动删除，导入时会自动剥离外层。',
-    pastePlaceholder: '{ "appId": "qinjianshouji", "version": 2, ... }',
+    pastePlaceholder: '{ "appId": "pianotes", "version": 2, ... }',
     pasteSubmit: '校验并导入',
     importConfirm: '导入将覆盖本机当前的打卡记录、顺延天数与阶段计划，确定继续？',
-    importError: '无法解析：请确认 appId 为 qinjianshouji、version 为 2，且为合法 JSON（可由本应用导出或按存档模板生成）。',
+    importError: '无法解析：请确认 appId 为 pianotes 为 2，且为合法 JSON（可由本应用导出或按存档模板生成）。',
     aiSchemaGuide: `【练琴手记】档案 JSON 字段说明（生成时必须输出合法 UTF-8 JSON，不要包含注释）
 
 必填顶层字段：
-• appId：固定字符串 "qinjianshouji"
+• appId：固定字符串 "pianotes"
 • version：数字 2（与本应用一致方可导入）
 • startDate：字符串 "YYYY-MM-DD"，练习路线起点日
 • skipDays：非负整数，自动顺延累计天数（新计划一般用 0）

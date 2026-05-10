@@ -185,14 +185,14 @@ export default {
     pasteTitle: 'Paste archive',
     pasteHint:
       'Paste full JSON matching “Export backup”. Markdown ```json fences are stripped automatically.',
-    pastePlaceholder: '{ "appId": "qinjianshouji", "version": 2, ... }',
+    pastePlaceholder: '{ "appId": "pianotes", "version": 2, ... }',
     pasteSubmit: 'Validate & import',
     importConfirm: 'Import overwrites logs, deferrals, and plan on this device. Continue?',
-    importError: 'Could not parse: appId must be qinjianshouji, version must be 2, body must be valid JSON (from this app or the archive template).',
+    importError: 'Could not parse: appId must be pianotes, version must be 2, body must be valid JSON (from this app or the archive template).',
     aiSchemaGuide: `[Piano Notes] Archive JSON schema (output strict UTF-8 JSON, no comments)
 
 Top-level required fields:
-• appId: string "qinjianshouji"
+• appId: string "pianotes"
 • version: number 2 (must match this app)
 • startDate: string "YYYY-MM-DD" route anchor
 • skipDays: non-negative integer (use 0 for new plans)
