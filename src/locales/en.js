@@ -92,6 +92,8 @@ export default {
     statHoursSuffix: 'h',
     heatmapTitle: 'Heatmap · last 16 weeks',
     repertoireTitle: 'Repertoire · by tag',
+    repertoireTotalCount: '{n} pieces total',
+    repertoireTagCount: '{n} pieces',
     repertoireIntro:
       'Only rows from each segment’s checklist count (including per-row tags). If the checklist is empty, finishing that segment adds nothing here. Items appear after global progress passes the segment; duplicates merge under each tag. “Suggested review” draws from the same pool.',
     emptyPiecesHint: 'Nothing yet: edit a segment under Plan and fill its checklist (optional tags per row). Piece A/B and optional slots do not add repertoire by themselves.',
@@ -109,8 +111,8 @@ export default {
     more: 'More',
   },
   plan: {
-    screenTitle: 'Segments & order',
-    introItalic: 'Weeks are the smallest unit; edit counts and reorder; keep adding after the built-in path.',
+    screenTitle: 'Segments',
+    introItalic: 'Weeks are the smallest unit; edit each segment’s duration and pieces; keep adding after the built-in path.',
     fromCurrentExplain:
       '{weeks} weeks total. “Start here” aligns Today + week counter to week 1 of that segment; earlier weeks count as passed — Progress updates repertoire from each segment’s checklist (logs & heatmap unchanged). Tap another card to move the anchor.',
     addBlock: 'Add segment',
@@ -119,15 +121,13 @@ export default {
     startHereTitle: 'Anchor route at this segment',
     startHere: 'Start here',
     edit: 'Edit',
-    moveUp: 'Up',
-    moveDown: 'Down',
     mainPlaceholder: '(piece A empty)',
     mainSep: ' · ',
     mainPlaceholderB: '(piece B empty)',
-    cardMeta: '{weeks} wk · ~{focusMin} min/session · {opts}',
-    optTwo: 'Two optional slots',
-    optOne: 'One optional slot',
-    optNone: 'No optional slots',
+    cardMetaCore: '{weeks} wk · ~{focusMin} min/session',
+    mainHeading: 'Main',
+    optionalHeading: 'Optional',
+    optNone: 'No optional slots filled',
     archiveTitle: 'Archive',
     archiveIntro:
       'Same schema as JSON; files use a .txt extension for easier saving and sharing on phones. Import from a file (.txt) or paste from notes/chat. Field docs + sample blocks: export “Archive template”.',
@@ -215,6 +215,7 @@ Extra keys like readme, schemaGuide, keys, exportedAt are ignored on import if p
   },
   confirm: {
     planDialogTitle: 'Please confirm',
+    alertTitle: 'Notice',
     confirmBtn: 'Confirm',
     undoTodayLog: 'Remove today’s practice log? Heatmap and streak will update.',
     startFromBlock:

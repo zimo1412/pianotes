@@ -26,6 +26,7 @@ import { TodayScreen } from './piano/screens/TodayScreen.jsx';
 import { ProgressScreen } from './piano/screens/ProgressScreen.jsx';
 import { PlanScreen } from './piano/screens/PlanScreen.jsx';
 import { BlockEditorModal } from './piano/screens/BlockEditorModal.jsx';
+import { FONT_UI, displayMixedItalic } from './piano/typography.js';
 
 export default function PianoApp() {
   const { locale, setLocale, t, messages } = useI18n();
@@ -48,9 +49,27 @@ export default function PianoApp() {
   const [archivePasteText, setArchivePasteText] = useState('');
   /** null | { kind: 'start'; index: number } | { kind: 'delete'; id: string } */
   const [planConfirm, setPlanConfirm] = useState(null);
+  /** Generic confirm / alert (replaces window.confirm / alert) */
+  const [appDialog, setAppDialog] = useState(
+    /** @type {null | { kind: 'importConfirm'; imported: unknown; closePaste?: boolean } | { kind: 'alert'; title: string; body: string } | { kind: 'undoTodayLog' }} */
+    null,
+  );
 
   const isDark = theme === 'dark';
   const styles = createAppStyles(isDark);
+
+  useEffect(() => {
+    document.documentElement.style.backgroundColor = styles.bg;
+    document.body.style.backgroundColor = styles.bg;
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    let metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (!metaTheme) {
+      metaTheme = document.createElement('meta');
+      metaTheme.setAttribute('name', 'theme-color');
+      document.head.appendChild(metaTheme);
+    }
+    metaTheme.setAttribute('content', styles.bg);
+  }, [styles.bg, isDark]);
 
   useEffect(() => {
     async function load() {
@@ -236,10 +255,8 @@ export default function PianoApp() {
     setPlanEditor(null);
   }
 
-  function confirmAndImportArchive(imported) {
-    if (!confirm(t('archive.importConfirm'))) return false;
-    void commitImportedArchive(imported);
-    return true;
+  function openImportOverwriteConfirm(imported, options) {
+    setAppDialog({ kind: 'importConfirm', imported, closePaste: options?.closePaste });
   }
 
   function handleArchiveImportChange(e) {
@@ -250,9 +267,9 @@ export default function PianoApp() {
     reader.onload = () => {
       try {
         const imported = parseImportedArchiveText(String(reader.result ?? ''));
-        confirmAndImportArchive(imported);
+        openImportOverwriteConfirm(imported);
       } catch {
-        alert(t('archive.importError'));
+        setAppDialog({ kind: 'alert', title: t('confirm.alertTitle'), body: t('archive.importError') });
       }
     };
     reader.readAsText(file, 'UTF-8');
@@ -261,11 +278,9 @@ export default function PianoApp() {
   function handleArchivePasteSubmit() {
     try {
       const imported = parseImportedArchiveText(archivePasteText);
-      if (!confirmAndImportArchive(imported)) return;
-      setArchivePasteOpen(false);
-      setArchivePasteText('');
+      openImportOverwriteConfirm(imported, { closePaste: true });
     } catch {
-      alert(t('archive.importError'));
+      setAppDialog({ kind: 'alert', title: t('confirm.alertTitle'), body: t('archive.importError') });
     }
   }
 
@@ -328,11 +343,7 @@ export default function PianoApp() {
   }
 
   function handleUndoTodayLog() {
-    if (!confirm(t('confirm.undoTodayLog'))) return;
-    const next = { ...completed };
-    delete next[todayStr];
-    saveCompleted(next);
-    resetPracticeLogDraft();
+    setAppDialog({ kind: 'undoTodayLog' });
   }
 
   function handleLogPractice() {
@@ -355,14 +366,6 @@ export default function PianoApp() {
     saveTheme(theme === 'dark' ? 'light' : 'dark');
   }
 
-  function moveBlock(index, dir) {
-    const j = index + dir;
-    if (j < 0 || j >= blocks.length) return;
-    const next = [...blocks];
-    [next[index], next[j]] = [next[j], next[index]];
-    saveBlocks(next);
-  }
-
   function applyPlanEditorSave(payload) {
     const normalized = normalizeBlock(payload);
     if (!planEditor) return;
@@ -374,11 +377,6 @@ export default function PianoApp() {
   function removePlanBlockCore(id) {
     saveBlocks(blocks.filter((b) => b.id !== id));
     setPlanEditor(null);
-  }
-
-  function deletePlanBlock(id) {
-    if (!confirm(t('confirm.deleteBlock'))) return;
-    removePlanBlockCore(id);
   }
 
   const themeName = theme === 'dark' ? t('header.themeDark') : t('header.themeLight');
@@ -398,20 +396,20 @@ export default function PianoApp() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: styles.bg, fontFamily: '"Noto Serif SC", "Cormorant Garamond", serif', transition: 'background 0.3s', color: styles.text }}>
-      <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Noto+Serif+SC:wght@600;700;800;900&display=swap" rel="stylesheet" />
+    <div style={{ minHeight: '100vh', background: styles.bg, fontFamily: FONT_UI, transition: 'background 0.3s', color: styles.text }}>
+      <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Noto+Serif+SC:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
       <div style={{ maxWidth: 448, margin: '0 auto', paddingBottom: 96 }}>
         <header style={{ padding: '40px 24px 20px', borderBottom: `1px solid ${styles.border}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ color: styles.accent, fontSize: 11, letterSpacing: '0.2em', marginBottom: 8, fontFamily: '"Noto Serif SC", serif', fontWeight: 800 }}>
+            <div style={{ color: styles.accent, fontSize: 12, letterSpacing: '0.2em', marginBottom: 6, fontFamily: '"Noto Serif SC", serif', fontWeight: 800, lineHeight: 1.25 }}>
               {t('header.scheduleTitle')}
             </div>
-            <h1 style={{ fontSize: 34, color: styles.text, fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.01em' }}>
+            <h1 style={{ ...displayMixedItalic, fontSize: 34, color: styles.text, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.01em' }}>
               {t('header.titleBefore')}
               <span style={{ color: styles.primary }}>{t('header.titleAccent')}</span>
             </h1>
-            <div style={{ marginTop: 12, display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 11, color: styles.textFaint, fontFamily: '"Noto Serif SC", serif', fontWeight: 700, letterSpacing: '0.06em' }}>
+            <div style={{ marginTop: 10, display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12, color: styles.textFaint, fontFamily: '"Noto Serif SC", serif', fontWeight: 700, letterSpacing: '0.06em', lineHeight: 1.3 }}>
               <span>{totalWeeks > 0 ? t('header.weekProgress', { current: weekNumber, total: totalWeeks }) : t('header.weekProgressNoPlan')}</span>
               {streak > 0 && (
                 <span style={{ color: styles.accent, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -425,7 +423,7 @@ export default function PianoApp() {
             <button
               type="button"
               onClick={() => void setLocale(locale === 'zh' ? 'en' : 'zh')}
-              style={{ ...headerCornerBtn, fontSize: 11, fontFamily: '"Noto Serif SC", serif', fontWeight: 800, letterSpacing: '0.06em' }}
+              style={{ ...headerCornerBtn, fontSize: 12, fontFamily: '"Noto Serif SC", serif', fontWeight: 800, letterSpacing: '0.06em' }}
               title={locale === 'zh' ? t('header.langSwitchToEn') : t('header.langSwitchToZh')}
             >
               {locale === 'zh' ? 'EN' : '中'}
@@ -470,7 +468,6 @@ export default function PianoApp() {
             styles={styles}
             blocks={blocks}
             weekNumber={weekNumber}
-            moveBlock={moveBlock}
             setPlanEditor={setPlanEditor}
             onRequestStartFromBlock={(bi) => setPlanConfirm({ kind: 'start', index: bi })}
             onRequestDeletePlanBlock={(id) => setPlanConfirm({ kind: 'delete', id })}
@@ -491,7 +488,7 @@ export default function PianoApp() {
               setArchivePasteText('');
             }}
           >
-            <h3 style={{ fontSize: 22, marginBottom: 12, color: styles.text, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 700 }}>
+            <h3 style={{ ...displayMixedItalic, fontSize: 22, marginBottom: 12, color: styles.text, fontWeight: 700 }}>
               {t('archive.pasteTitle')}
             </h3>
             <p style={{ fontSize: 12, color: styles.textMuted, marginBottom: 14, lineHeight: 1.55, fontWeight: 600 }}>
@@ -544,7 +541,7 @@ export default function PianoApp() {
             right: 0,
             maxWidth: 448,
             margin: '0 auto',
-            background: isDark ? 'rgba(12, 10, 9, 0.95)' : 'rgba(250, 250, 249, 0.95)',
+            background: isDark ? 'rgba(23, 20, 17, 0.95)' : 'rgba(250, 250, 249, 0.95)',
             backdropFilter: 'blur(8px)',
             borderTop: `1px solid ${styles.border}`,
             display: 'grid',
@@ -564,7 +561,7 @@ export default function PianoApp() {
               resetPracticeLogDraft();
             }}
           >
-            <h3 style={{ fontSize: 24, marginBottom: 16, color: styles.text, fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 700 }}>
+            <h3 style={{ ...displayMixedItalic, fontSize: 24, marginBottom: 16, color: styles.text, fontWeight: 700 }}>
               {practiceLogMode === 'edit' ? t('logModal.titleEdit') : t('logModal.title')}
             </h3>
             <div style={{ marginBottom: 16 }}>
@@ -582,19 +579,19 @@ export default function PianoApp() {
                 </button>
                 <div
                   style={{
+                    ...displayMixedItalic,
                     flex: 1,
                     textAlign: 'center',
                     fontSize: 30,
                     padding: '12px 8px',
                     color: styles.text,
-                    fontFamily: 'Cormorant Garamond, serif',
-                    fontStyle: 'italic',
                     fontWeight: 700,
                     lineHeight: 1.2,
+                    fontVariantNumeric: 'tabular-nums',
                   }}
                 >
                   {logDuration}
-                  <span style={{ fontSize: 15, fontStyle: 'normal', fontWeight: 700, fontFamily: '"Noto Serif SC", serif', color: styles.textFaint, marginLeft: 6 }}>
+                  <span style={{ fontSize: 15, fontStyle: 'normal', fontWeight: 700, fontFamily: FONT_UI, color: styles.textFaint, marginLeft: 6 }}>
                     {t('logModal.durationSuffix')}
                   </span>
                 </div>
@@ -627,12 +624,20 @@ export default function PianoApp() {
         )}
 
         {planEditor && (
-          <BlockEditorModal styles={styles} isDark={isDark} planEditor={planEditor} blocks={blocks} onClose={() => setPlanEditor(null)} onSave={applyPlanEditorSave} onDelete={deletePlanBlock} />
+          <BlockEditorModal
+            styles={styles}
+            isDark={isDark}
+            planEditor={planEditor}
+            blocks={blocks}
+            onClose={() => setPlanEditor(null)}
+            onSave={applyPlanEditorSave}
+            onDelete={(id) => setPlanConfirm({ kind: 'delete', id })}
+          />
         )}
 
         {planConfirm && (
           <Modal styles={styles} onClose={() => setPlanConfirm(null)}>
-            <h3 style={{ fontSize: 22, marginBottom: 14, color: styles.text, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 700 }}>
+            <h3 style={{ ...displayMixedItalic, fontSize: 22, marginBottom: 14, color: styles.text, fontWeight: 700 }}>
               {t('confirm.planDialogTitle')}
             </h3>
             <p style={{ fontSize: 13, color: styles.textMuted, marginBottom: 20, lineHeight: 1.65, fontFamily: '"Noto Serif SC", serif', fontWeight: 600 }}>
@@ -654,6 +659,53 @@ export default function PianoApp() {
                 {t('confirm.confirmBtn')}
               </button>
             </div>
+          </Modal>
+        )}
+
+        {appDialog && (
+          <Modal styles={styles} onClose={() => setAppDialog(null)}>
+            <h3 style={{ ...displayMixedItalic, fontSize: 22, marginBottom: 14, color: styles.text, fontWeight: 700 }}>
+              {appDialog.kind === 'alert' ? appDialog.title : t('confirm.planDialogTitle')}
+            </h3>
+            <p style={{ fontSize: 13, color: styles.textMuted, marginBottom: 20, lineHeight: 1.65, fontFamily: '"Noto Serif SC", serif', fontWeight: 600 }}>
+              {appDialog.kind === 'alert'
+                ? appDialog.body
+                : appDialog.kind === 'importConfirm'
+                  ? t('archive.importConfirm')
+                  : t('confirm.undoTodayLog')}
+            </p>
+            {appDialog.kind === 'alert' ? (
+              <button type="button" onClick={() => setAppDialog(null)} style={{ ...primaryButton(styles), width: '100%' }}>
+                {t('confirm.confirmBtn')}
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" onClick={() => setAppDialog(null)} style={{ ...secondaryButton(styles), flex: 1 }}>
+                  {t('editor.cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (appDialog.kind === 'importConfirm') {
+                      void commitImportedArchive(appDialog.imported);
+                      if (appDialog.closePaste) {
+                        setArchivePasteOpen(false);
+                        setArchivePasteText('');
+                      }
+                    } else {
+                      const next = { ...completed };
+                      delete next[todayStr];
+                      saveCompleted(next);
+                      resetPracticeLogDraft();
+                    }
+                    setAppDialog(null);
+                  }}
+                  style={{ ...primaryButton(styles), flex: 1 }}
+                >
+                  {t('confirm.confirmBtn')}
+                </button>
+              </div>
+            )}
           </Modal>
         )}
       </div>

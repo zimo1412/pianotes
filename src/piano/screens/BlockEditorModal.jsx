@@ -18,6 +18,7 @@ import {
 } from '../blockModel.js';
 import { Modal } from '../ui/Modal.jsx';
 import { iconButton, primaryButton, secondaryButton } from '../ui/buttonStyles.js';
+import { displayMixedItalic } from '../typography.js';
 
 function PieceTagsInput({ styles, isDark, tags, onChange, hint, placeholder }) {
   const inp = {
@@ -78,7 +79,7 @@ export function BlockEditorModal({ styles, isDark, planEditor, blocks, onClose, 
   }
   return (
     <Modal styles={styles} onClose={onClose}>
-      <h3 style={{ fontSize: 22, marginBottom: 16, color: styles.text, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 700 }}>
+      <h3 style={{ ...displayMixedItalic, fontSize: 22, marginBottom: 16, color: styles.text, fontWeight: 700 }}>
         {planEditor.mode === 'add' ? t('editor.addTitle') : t('editor.editTitle')}
       </h3>
 

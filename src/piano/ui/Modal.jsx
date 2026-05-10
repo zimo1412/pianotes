@@ -67,7 +67,7 @@ export function TabButton({ styles, icon, label, active, onClick }) {
       }}
     >
       {icon}
-      <span style={{ fontSize: 10, letterSpacing: '0.12em', fontFamily: '"Noto Serif SC", serif', fontWeight: 800 }}>
+      <span style={{ fontSize: 11, letterSpacing: '0.1em', fontFamily: '"Noto Serif SC", serif', fontWeight: 800, lineHeight: 1.2 }}>
         {label}
       </span>
     </button>

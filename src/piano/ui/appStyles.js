@@ -4,19 +4,21 @@
 
 export function createAppStyles(isDark) {
   return {
-    bg: isDark ? '#0c0a09' : '#fafaf9',
-    bgCard: isDark ? '#1c1917' : '#f5f5f4',
-    bgHighlight: isDark ? '#292524' : '#e7e5e4',
-    border: isDark ? '#44403c' : '#a8a29e',
-    borderSoft: isDark ? '#292524' : '#d6d3d1',
-    text: isDark ? '#fafaf9' : '#0c0a09',
-    textSoft: isDark ? '#e7e5e4' : '#1c1917',
-    textMuted: isDark ? '#d6d3d1' : '#44403c',
-    textFaint: isDark ? '#a8a29e' : '#57534e',
+    /** Dark: warm charcoal (easier than near-black + paper-white). */
+    bg: isDark ? '#171411' : '#fafaf9',
+    bgCard: isDark ? '#1f1d1a' : '#f5f5f4',
+    bgHighlight: isDark ? '#2c2825' : '#e7e5e4',
+    border: isDark ? '#403c38' : '#a8a29e',
+    borderSoft: isDark ? '#32302c' : '#d6d3d1',
+    text: isDark ? '#ece8e3' : '#0c0a09',
+    textSoft: isDark ? '#dbd6d0' : '#1c1917',
+    textMuted: isDark ? '#ada8a2' : '#44403c',
+    textFaint: isDark ? '#8f8a84' : '#57534e',
     accent: isDark ? '#fbbf24' : '#92400e',
     primary: isDark ? '#fda4af' : '#7f1d1d',
-    primaryBg: isDark ? '#fafaf9' : '#0c0a09',
-    primaryBgText: isDark ? '#0c0a09' : '#fafaf9',
+    /** Dark: soft warm fill — avoids paper-white primary CTAs on charcoal bg. */
+    primaryBg: isDark ? '#403b36' : '#0c0a09',
+    primaryBgText: isDark ? '#f7f4ef' : '#fafaf9',
     bgRest: isDark ? 'rgba(120, 53, 15, 0.35)' : 'rgba(254, 243, 199, 1)',
     borderRest: isDark ? '#b45309' : '#fcd34d',
     bgDone: isDark ? 'rgba(20, 83, 45, 0.4)' : 'rgba(220, 252, 231, 1)',
