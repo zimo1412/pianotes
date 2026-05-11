@@ -173,7 +173,7 @@ export default {
     cancel: '取消',
   },
   archive: {
-    readme: '练琴手记完整快照：含练习起点、顺延、路线周序覆盖、阶段计划、打卡记录、自动顺延标记与主题；导入会覆盖本机同名键。',
+    readme: '练琴手记完整快照：含练习起点、阶段计划、打卡记录、自动顺延标记、路线锚点与主题；导入会覆盖本机同名键。',
     templateReadme:
       'AI / 手工编写计划用示例档案：内含 schemaGuide（字段说明）与示例 blocks。可将本文件提供给大模型，要求其输出同结构的合法 JSON；再用「粘贴导入」或「从文件导入」写入本应用。',
     downloadPrefix: '练琴手记-档案-',
@@ -190,13 +190,12 @@ export default {
 必填顶层字段：
 • appId：固定字符串 "pianotes"
 • version：数字 2（与本应用一致方可导入）
-• startDate：字符串 "YYYY-MM-DD"，练习路线起点日
-• skipDays：非负整数，自动顺延累计天数（新计划一般用 0）
-• manualWeekOverride：null 或正整数；若非 null，表示手动锁定全局周序号（通常用 null）
+• startDate：字符串 "YYYY-MM-DD"，练习路线起点日（用于显示「累计顺延」与默认锚点）
 • blocks：数组；可为空表示尚未配置路线；非空时每项为一个阶段对象（顺序即路线顺序）
 • completed：对象，键为 "YYYY-MM-DD"，值为 { duration, note? }；新计划可为 {}
-• autoPostponed：对象，键为日期字符串，值为 true；新计划可为 {}
+• autoPostponed：对象，键为日期字符串，值为 true（顶部「已顺延 N 天」即此对象的条目数；新计划可为 {}）
 • theme：字符串 "light"、"dark" 或 "system"（跟随系统深浅色）
+• routeAnchor：null 或 { date: "YYYY-MM-DD", week: 正整数 }；非 null 表示「从当前开始」时把今天对齐到该全局周；为 null 时按 startDate 自然推进（新计划一般用 null）
 
 阶段对象 blocks[] 常用字段：
 • id：字符串，唯一，建议 "b_" 前缀 + 随机字符

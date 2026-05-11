@@ -176,7 +176,7 @@ export default {
     cancel: 'Cancel',
   },
   archive: {
-    readme: 'Full Piano Notes snapshot: start date, deferrals, manual week, plan, logs, auto-defer flags, theme; import overwrites matching keys.',
+    readme: 'Full Piano Notes snapshot: start date, plan, logs, auto-defer flags, route anchor, theme; import overwrites matching keys.',
     templateReadme:
       'Sample archive for AI / hand-authored plans: includes schemaGuide plus example blocks. Give this file to a model and ask for valid JSON with the same shape; then use Paste import or Import file.',
     downloadPrefix: 'piano-notes-archive-',
@@ -193,13 +193,12 @@ export default {
 Top-level required fields:
 • appId: string "pianotes"
 • version: number 2 (must match this app)
-• startDate: string "YYYY-MM-DD" route anchor
-• skipDays: non-negative integer (use 0 for new plans)
-• manualWeekOverride: null or positive integer; if set, locks global week index (usually null)
+• startDate: string "YYYY-MM-DD" practice start date (powers the header "deferred" stat and the default anchor)
 • blocks: array; may be empty (no route); if non-empty each item is a segment (order = route order)
 • completed: object keyed by "YYYY-MM-DD" with { duration, note? }; {} for new plans
-• autoPostponed: object date keys → true; {} for new plans
+• autoPostponed: object date keys → true; the header "N days deferred" stat is the entry count; {} for new plans
 • theme: "light" | "dark" | "system" (follow OS light/dark)
+• routeAnchor: null or { date: "YYYY-MM-DD", week: positive integer }; if set, "Start here" pinned today to that global week and progression continues from there; null means progress naturally from startDate (use null for new plans)
 
 Each blocks[] segment:
 • id: unique string (e.g. "b_" + random)

@@ -10,7 +10,7 @@ import { useI18n } from './locales/I18nProvider.jsx';
 import { DEFAULT_BLOCKS, PRACTICE_LOG_DURATION_STEP } from './piano/constants.js';
 import { normalizeBlock, normalizeBlocks } from './piano/blockModel.js';
 import { getPracticeDayAnchor, getDateString, daysBetween, getDeadlineForPracticeDayKey, parseLocalDayFromKey } from './piano/dateAnchors.js';
-import { getFocusForToday, clampGlobalWeek, defaultLogMinutesFromTodayInfo, calculateStreak } from './piano/routeFocus.js';
+import { getFocusForToday, defaultLogMinutesFromTodayInfo, calculateStreak } from './piano/routeFocus.js';
 import { getSystemPrefersDarkSnapshot, normalizeTheme, subscribeSystemPrefersDark } from './piano/theme.js';
 import {
   buildPracticeArchive,
@@ -28,11 +28,23 @@ import { PlanScreen } from './piano/screens/PlanScreen.jsx';
 import { BlockEditorModal } from './piano/screens/BlockEditorModal.jsx';
 import { FONT_UI, displayMixedItalic } from './piano/typography.js';
 
+/**
+ * Count entries in `autoPostponed` whose key falls in the half-open range
+ * `[startKey, endKey)`. Date keys are zero-padded YYYY-MM-DD so lexicographic
+ * comparison matches calendar order.
+ */
+function countDeferredInRange(autoPostponed, startKey, endKey) {
+  let n = 0;
+  for (const k of Object.keys(autoPostponed)) {
+    if (autoPostponed[k] && k >= startKey && k < endKey) n++;
+  }
+  return n;
+}
+
 export default function PianoApp() {
   const { locale, setLocale, t, messages } = useI18n();
   const [tab, setTab] = useState('today');
   const [startDate, setStartDate] = useState(() => getDateString(getPracticeDayAnchor(new Date())));
-  const [skipDays, setSkipDays] = useState(0);
   const [blocks, setBlocks] = useState(DEFAULT_BLOCKS);
   const [completed, setCompleted] = useState({});
   const [autoPostponed, setAutoPostponed] = useState({});
@@ -43,7 +55,13 @@ export default function PianoApp() {
   const [logNote, setLogNote] = useState('');
   const [theme, setTheme] = useState('system');
   const [autoMsg, setAutoMsg] = useState(0);
-  const [manualWeekOverride, setManualWeekOverride] = useState(null);
+  /**
+   * Route anchor: shifts the (anchorDate, anchorWeek) reference for the
+   * global week counter. `null` means "use startDate as week 1".
+   * Set via `runStartRouteFromBlock`; never derived from auto-defer state.
+   * @type {[null | { date: string, week: number }, Function]}
+   */
+  const [routeAnchor, setRouteAnchor] = useState(null);
   const archiveImportRef = useRef(null);
   const [archivePasteOpen, setArchivePasteOpen] = useState(false);
   const [archivePasteText, setArchivePasteText] = useState('');
@@ -96,12 +114,6 @@ export default function PianoApp() {
       }
       setStartDate(sd);
 
-      let curSkip = 0;
-      try {
-        const r = await practiceStorage.get('skipDays');
-        if (r) curSkip = parseInt(r.value) || 0;
-      } catch (e) {}
-
       let curCompleted = {};
       try {
         const r = await practiceStorage.get('completed');
@@ -132,14 +144,26 @@ export default function PianoApp() {
       } catch (e) {}
 
       try {
-        const r = await practiceStorage.get('manualWeekOverride');
+        const r = await practiceStorage.get('routeAnchor');
         if (r && r.value !== '') {
-          const mw = parseInt(r.value, 10);
-          if (Number.isFinite(mw)) setManualWeekOverride(mw);
+          const parsed = JSON.parse(r.value);
+          if (
+            parsed &&
+            typeof parsed === 'object' &&
+            typeof parsed.date === 'string' &&
+            /^\d{4}-\d{2}-\d{2}$/.test(parsed.date) &&
+            Number.isFinite(Number(parsed.week)) &&
+            Number(parsed.week) >= 1
+          ) {
+            setRouteAnchor({ date: parsed.date, week: Math.floor(Number(parsed.week)) });
+          }
         }
       } catch (e) {}
 
-      // Auto-defer: past deadline for practice-day key without log -> increment skipDays once per day
+      // Auto-defer: any past practice-day with no log gets marked in autoPostponed.
+      // This is the SOLE source of truth for "missed days"; week math derives a
+      // separate count from the (anchor, today) window so anchoring never
+      // touches this dict.
       const now = new Date();
       const cursor = parseLocalDayFromKey(sd) ?? parseLocalDayFromKey(practiceDayKey);
       if (!cursor) return;
@@ -154,13 +178,8 @@ export default function PianoApp() {
         }
         cursor.setDate(cursor.getDate() + 1);
       }
-      const finalSkip = curSkip + added;
-      setSkipDays(finalSkip);
       setAutoPostponed(newAuto);
       if (added > 0) {
-        try {
-          await practiceStorage.set('skipDays', String(finalSkip));
-        } catch (e) {}
         try {
           await practiceStorage.set('autoPostponed', JSON.stringify(newAuto));
         } catch (e) {}
@@ -170,31 +189,26 @@ export default function PianoApp() {
     load();
   }, []);
 
-  async function saveManualWeekOverride(n, blocksArg) {
-    const list = blocksArg ?? blocks;
-    const tw = list.reduce((s, b) => s + b.weeks, 0);
-    if (tw <= 0) {
-      setManualWeekOverride(null);
-      await save('manualWeekOverride', '');
-      return;
-    }
-    const v = n != null && Number.isFinite(Number(n)) ? clampGlobalWeek(n, tw) : null;
-    setManualWeekOverride(v);
-    if (v == null) await save('manualWeekOverride', '');
-    else await save('manualWeekOverride', String(v));
+  async function saveRouteAnchor(next) {
+    setRouteAnchor(next);
+    if (next == null) await save('routeAnchor', '');
+    else await save('routeAnchor', { date: next.date, week: next.week });
   }
 
+  /** Clear or clamp routeAnchor.week if blocks shrink below it. */
   useEffect(() => {
     const tw = blocks.reduce((s, b) => s + b.weeks, 0);
-    setManualWeekOverride((mw) => {
+    setRouteAnchor((cur) => {
+      if (cur == null) return cur;
       if (tw <= 0) {
-        if (mw != null) void save('manualWeekOverride', '');
+        void save('routeAnchor', '');
         return null;
       }
-      if (mw == null) return mw;
-      const c = clampGlobalWeek(mw, tw);
-      if (c !== mw) void save('manualWeekOverride', String(c));
-      return c;
+      const clamped = Math.min(tw, Math.max(1, cur.week));
+      if (clamped === cur.week) return cur;
+      const next = { date: cur.date, week: clamped };
+      void save('routeAnchor', next);
+      return next;
     });
   }, [blocks]);
 
@@ -224,12 +238,11 @@ export default function PianoApp() {
     const payload = buildPracticeArchive(
       {
         startDate,
-        skipDays,
-        manualWeekOverride,
         blocks,
         completed,
         autoPostponed,
         theme,
+        routeAnchor,
       },
       t('archive.readme'),
     );
@@ -243,8 +256,6 @@ export default function PianoApp() {
 
   async function commitImportedArchive(imported) {
     await saveStartDate(imported.startDate);
-    setSkipDays(imported.skipDays);
-    await save('skipDays', String(imported.skipDays));
     setBlocks(imported.blocks);
     await save('blocks', imported.blocks);
     setCompleted(imported.completed);
@@ -252,7 +263,7 @@ export default function PianoApp() {
     setAutoPostponed(imported.autoPostponed);
     await save('autoPostponed', imported.autoPostponed);
     await saveTheme(imported.theme);
-    await saveManualWeekOverride(imported.manualWeekOverride ?? null, imported.blocks);
+    await saveRouteAnchor(imported.routeAnchor ?? null);
     setAutoMsg(0);
     setPlanEditor(null);
   }
@@ -290,13 +301,26 @@ export default function PianoApp() {
   const todayStr = getDateString(today);
   const totalWeeks = blocks.reduce((s, b) => s + b.weeks, 0);
 
-  const realDays = daysBetween(startDate, todayStr);
-  const effectiveDays = Math.max(0, realDays - skipDays);
-  const calendarWeekNumber = totalWeeks > 0 ? Math.min(totalWeeks, Math.floor(effectiveDays / 7) + 1) : 0;
+  // Display stat (header): cumulative auto-deferrals since startDate. Never reset.
+  const totalDeferred = useMemo(
+    () => Object.values(autoPostponed).reduce((n, v) => (v ? n + 1 : n), 0),
+    [autoPostponed],
+  );
+
+  // Week math is anchored: anchor defaults to (startDate, week 1) if user hasn't
+  // explicitly anchored via "Start here". Auto-defer entries before the anchor
+  // are intentionally ignored — only deferrals that happen *after* anchoring
+  // slow week progression.
+  const anchorDate = routeAnchor?.date ?? startDate;
+  const anchorWeek = routeAnchor?.week ?? 1;
+  const daysSinceAnchor = Math.max(0, daysBetween(anchorDate, todayStr));
+  const deferredSinceAnchor = useMemo(
+    () => countDeferredInRange(autoPostponed, anchorDate, todayStr),
+    [autoPostponed, anchorDate, todayStr],
+  );
+  const effectiveDays = Math.max(0, daysSinceAnchor - deferredSinceAnchor);
   const weekNumber =
-    manualWeekOverride != null && Number.isFinite(manualWeekOverride)
-      ? clampGlobalWeek(manualWeekOverride, totalWeeks)
-      : calendarWeekNumber;
+    totalWeeks > 0 ? Math.min(totalWeeks, anchorWeek + Math.floor(effectiveDays / 7)) : 0;
 
   const scalesRotationPool = messages.scales.rotationPool;
   const scalesFallbackLabel = messages.scales.fallbackLabel;
@@ -355,13 +379,19 @@ export default function PianoApp() {
     resetPracticeLogDraft();
   }
 
-  /** Plan: anchor route at segment week 1 (manualWeekOverride) */
+  /**
+   * Plan: anchor today as week 1 day 1 of the chosen segment.
+   * Only writes `routeAnchor`; does not touch `startDate`, `autoPostponed`,
+   * or any other state. Future check-ins advance the week counter naturally
+   * from this anchor; pre-anchor deferrals do not affect week math.
+   */
   function runStartRouteFromBlock(blockIndex) {
     const bi = blockIndex;
     if (bi < 0 || bi >= blocks.length) return;
     let cumBefore = 0;
     for (let i = 0; i < bi; i++) cumBefore += blocks[i].weeks;
-    void saveManualWeekOverride(cumBefore + 1);
+    const stageStartWeek = cumBefore + 1;
+    void saveRouteAnchor({ date: todayStr, week: stageStartWeek });
   }
 
   function cycleTheme() {
@@ -453,7 +483,7 @@ export default function PianoApp() {
                   <Flame size={12} strokeWidth={3} /> {t('header.streakLine', { n: streak })}
                 </span>
               )}
-              {skipDays > 0 && <span style={{ color: styles.accent }}>{t('header.skippedLine', { n: skipDays })}</span>}
+              {totalDeferred > 0 && <span style={{ color: styles.accent }}>{t('header.skippedLine', { n: totalDeferred })}</span>}
             </div>
           </div>
         </header>

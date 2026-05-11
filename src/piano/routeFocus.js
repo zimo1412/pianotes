@@ -1,7 +1,8 @@
 /**
  * Route navigation: current segment, today A/B focus, scales rotation row.
  * Caller passes `scales.rotationPool` from locales.
- * effectiveDays = elapsed calendar days since start minus skipDays.
+ * `effectiveDays` is the anchor-relative practice-day index (days since the
+ * route anchor, minus auto-deferrals in that window).
  */
 
 import { getPracticeDayAnchor, getDateString } from './dateAnchors.js';
@@ -17,14 +18,6 @@ export function getCurrentBlock(blocks, weekNumber) {
     cumulativeWeeks += block.weeks;
   }
   return { block: blocks[blocks.length - 1], weekInBlock: Math.max(0, weekNumber - cumulativeWeeks) };
-}
-
-/** Clamp manual week override into [1, totalWeeks]; 0 if plan length is 0. */
-export function clampGlobalWeek(w, totalWeeks) {
-  if (totalWeeks <= 0) return 0;
-  const n = parseInt(w, 10);
-  if (Number.isNaN(n)) return 1;
-  return Math.min(totalWeeks, Math.max(1, n));
 }
 
 /** Monday=0 … Sunday=6 (heatmap + Today weekday labels). */

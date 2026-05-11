@@ -25,11 +25,10 @@ export const practiceStorage = {
 /** Keys owned by PianoApp (export checklist / debugging). */
 export const PERSISTED_KEYS = [
   'startDate',
-  'skipDays',
   'blocks',
   'completed',
   'autoPostponed',
   'theme',
-  'manualWeekOverride',
+  'routeAnchor',
   'locale',
 ];
