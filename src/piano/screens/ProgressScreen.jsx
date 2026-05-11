@@ -234,7 +234,7 @@ export function ProgressScreen({ styles, isDark, weekNumber, totalWeeks, complet
         </StatCard>
       </div>
 
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 12, letterSpacing: '0.15em', color: styles.accent, marginBottom: 10, fontFamily: '"Noto Serif SC", serif', fontWeight: 800, lineHeight: TAB_LH_META }}>
           {t('progress.heatmapTitle')}
         </div>
