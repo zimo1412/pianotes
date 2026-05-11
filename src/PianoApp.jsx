@@ -398,13 +398,14 @@ export default function PianoApp() {
     height: 36,
     padding: 0,
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
     color: styles.textMuted,
     background: 'none',
     border: 'none',
     cursor: 'pointer',
     flexShrink: 0,
+    lineHeight: 1,
   };
 
   return (
@@ -414,11 +415,11 @@ export default function PianoApp() {
       <div style={{ maxWidth: 448, margin: '0 auto', paddingBottom: 96 }}>
         <header style={{ paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: `1px solid ${styles.border}` }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-            <h1 style={{ ...displayMixedItalic, flex: 1, minWidth: 0, margin: 0, padding: 0, fontSize: 34, color: styles.text, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.01em' }}>
+            <h1 style={{ ...displayMixedItalic, flex: 1, minWidth: 0, margin: 0, padding: 0, fontSize: 34, color: styles.text, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.01em' }}>
               {t('header.titleBefore')}
               <span style={{ color: styles.primary }}>{t('header.titleAccent')}</span>
             </h1>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0, paddingTop: 2 }}>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 4, flexShrink: 0, transform: 'translateY(-3px)' }}>
               <button
                 type="button"
                 onClick={() => void setLocale(locale === 'zh' ? 'en' : 'zh')}

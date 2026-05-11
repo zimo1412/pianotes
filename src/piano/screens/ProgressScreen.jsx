@@ -36,41 +36,79 @@ function Heatmap({ styles, isDark, completed, today }) {
   }
 
   return (
-    <div style={{ overflowX: 'auto', margin: '0 -24px', padding: '0 24px' }}>
-      <div style={{ display: 'flex', gap: 4, minWidth: 'fit-content', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginRight: 4, fontFamily: '"Noto Serif SC", serif', fontWeight: 800, fontSize: 11, color: styles.textFaint, letterSpacing: '0.06em', lineHeight: TAB_LH_META }}>
+    <div>
+      <div
+        style={{
+          overflowX: 'auto',
+          width: '100%',
+          WebkitOverflowScrolling: 'touch',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ display: 'inline-block', textAlign: 'left', verticalAlign: 'top' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `max-content repeat(${weeks}, 18px)`,
+              gridTemplateRows: 'repeat(7, 18px)',
+              columnGap: 4,
+              rowGap: 4,
+              fontFamily: '"Noto Serif SC", serif',
+              fontWeight: 800,
+              fontSize: 11,
+              color: styles.textFaint,
+              letterSpacing: '0.02em',
+            }}
+          >
           {weekdays.map((d, i) => (
-            <div key={i} style={{ width: 14, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div
+              key={`dow-${i}`}
+              style={{
+                gridRow: i + 1,
+                gridColumn: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                lineHeight: 1,
+                paddingRight: 10,
+              }}
+            >
               {d}
             </div>
           ))}
-        </div>
-        {cells.map((week, wi) => (
-          <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {week.map((cell, di) => {
-              const baseStyle = { width: 18, height: 18, borderRadius: 2 };
+          {cells.map((week, wi) =>
+            week.map((cell, di) => {
+              const baseStyle = {
+                gridRow: di + 1,
+                gridColumn: wi + 2,
+                boxSizing: 'border-box',
+                width: 18,
+                height: 18,
+                borderRadius: 2,
+              };
               if (cell.future) {
-                return <div key={di} style={{ ...baseStyle, border: `1px solid ${styles.borderSoft}`, opacity: 0.3 }} />;
+                return <div key={`${wi}-${di}`} style={{ ...baseStyle, border: `1px solid ${styles.borderSoft}`, opacity: 0.3 }} />;
               }
               if (!cell.log) {
-                return <div key={di} style={{ ...baseStyle, border: `1px solid ${styles.borderSoft}` }} title={cell.key} />;
+                return <div key={`${wi}-${di}`} style={{ ...baseStyle, border: `1px solid ${styles.borderSoft}` }} title={cell.key} />;
               }
               const intensity = Math.min(1, (cell.log.duration || 30) / 90);
               const alpha = 0.3 + intensity * 0.7;
               const color = isDark ? `rgba(251, 191, 36, ${alpha})` : `rgba(146, 64, 14, ${alpha})`;
               return (
-                <div key={di} style={{ ...baseStyle, background: color }} title={t('heatmap.durationTitle', { date: cell.key, minutes: cell.log.duration })} />
+                <div key={`${wi}-${di}`} style={{ ...baseStyle, background: color }} title={t('heatmap.durationTitle', { date: cell.key, minutes: cell.log.duration })} />
               );
-            })}
+            }),
+          )}
           </div>
-        ))}
+        </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontSize: 12, color: styles.textFaint, fontFamily: '"Noto Serif SC", serif', fontWeight: 700, flexWrap: 'wrap', lineHeight: TAB_LH_META }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 12, fontSize: 12, color: styles.textFaint, fontFamily: '"Noto Serif SC", serif', fontWeight: 700, flexWrap: 'wrap', lineHeight: TAB_LH_META }}>
         <span>{t('heatmap.less')}</span>
-        <div style={{ width: 12, height: 12, border: `1px solid ${styles.borderSoft}`, borderRadius: 2 }} />
-        <div style={{ width: 12, height: 12, background: isDark ? 'rgba(251, 191, 36, 0.4)' : 'rgba(146, 64, 14, 0.4)', borderRadius: 2 }} />
-        <div style={{ width: 12, height: 12, background: isDark ? 'rgba(251, 191, 36, 0.7)' : 'rgba(146, 64, 14, 0.7)', borderRadius: 2 }} />
-        <div style={{ width: 12, height: 12, background: isDark ? 'rgba(251, 191, 36, 1)' : 'rgba(146, 64, 14, 1)', borderRadius: 2 }} />
+        <div style={{ width: 12, height: 12, border: `1px solid ${styles.borderSoft}`, borderRadius: 2, boxSizing: 'border-box' }} />
+        <div style={{ width: 12, height: 12, background: isDark ? 'rgba(251, 191, 36, 0.4)' : 'rgba(146, 64, 14, 0.4)', borderRadius: 2, boxSizing: 'border-box' }} />
+        <div style={{ width: 12, height: 12, background: isDark ? 'rgba(251, 191, 36, 0.7)' : 'rgba(146, 64, 14, 0.7)', borderRadius: 2, boxSizing: 'border-box' }} />
+        <div style={{ width: 12, height: 12, background: isDark ? 'rgba(251, 191, 36, 1)' : 'rgba(146, 64, 14, 1)', borderRadius: 2, boxSizing: 'border-box' }} />
         <span>{t('heatmap.more')}</span>
       </div>
     </div>
