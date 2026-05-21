@@ -53,6 +53,8 @@ export default {
   logModal: {
     title: '记录今日练习',
     titleEdit: '编辑今日打卡',
+    titleMakeup: '补打卡',
+    makeupSubtitle: '为 {date} 补一条练习记录；如该日已被自动顺延，将一并取消。',
     durationLabel: '练习时长（分钟）',
     durationMinusStepAria: '减 {step} 分钟',
     durationPlusStepAria: '加 {step} 分钟',
@@ -80,6 +82,8 @@ export default {
     emptyPlanHint: '当前还没有任何练习分段。请到「计划」里新增分段，或导入含路线的档案后再开始今日练习。',
     editLog: '编辑打卡',
     undoLog: '撤销打卡',
+    makeupYesterday: '补打 {date}',
+    makeupYesterdayTitle: '为 {date} 补一条打卡（同步取消该日的自动顺延）',
     dayNames: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
   },
   progress: {

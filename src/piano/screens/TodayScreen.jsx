@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Check, Shuffle, Flame } from 'lucide-react';
+import { Check, Shuffle, Flame, RotateCcw } from 'lucide-react';
 import { useI18n } from '../../locales/I18nProvider.jsx';
 import { getDedupedCompletedPieceTitles } from '../repertoire.js';
 import { getDayOfWeek } from '../routeFocus.js';
@@ -42,6 +42,10 @@ export function TodayScreen({
   onOpenNewLog,
   onEditLog,
   onUndoLog,
+  onMakeupYesterday,
+  canMakeupYesterday,
+  yesterdayDateLabel,
+  yesterdayDateShort,
   today,
   streak,
   blocks,
@@ -225,6 +229,40 @@ export function TodayScreen({
         >
           <Check size={16} strokeWidth={3} /> {t('today.ctaDone')}
         </button>
+      )}
+
+      {canMakeupYesterday && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+          <button
+            type="button"
+            onClick={onMakeupYesterday}
+            title={t('today.makeupYesterdayTitle', { date: yesterdayDateLabel })}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'none',
+              border: 'none',
+              padding: '4px 6px',
+              cursor: 'pointer',
+              color: styles.textFaint,
+              fontSize: 12,
+              fontFamily: '"Noto Serif SC", serif',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              lineHeight: 1.4,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = styles.text;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = styles.textFaint;
+            }}
+          >
+            <RotateCcw size={12} strokeWidth={2.5} />
+            {t('today.makeupYesterday', { date: yesterdayDateShort })}
+          </button>
+        </div>
       )}
 
       <div style={{ marginTop: completedToday ? 16 : 14, fontSize: 12, color: styles.textFaint, textAlign: 'center', fontFamily: '"Noto Serif SC", serif', fontWeight: 600, letterSpacing: '0.06em', lineHeight: TAB_LH_BODY }}>

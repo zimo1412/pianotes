@@ -332,6 +332,36 @@ export default function PianoApp() {
   const completedToday = completed[todayStr];
   const streak = calculateStreak(completed, new Date());
 
+  // Make-up for yesterday: precomputed so the Today tab can offer a one-tap
+  // backfill when the user practiced but forgot to log it (saving will also
+  // drop yesterday from autoPostponed if it was already auto-deferred).
+  const yesterday = useMemo(() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - 1);
+    return d;
+  }, [today]);
+  const yesterdayStr = useMemo(() => getDateString(yesterday), [yesterday]);
+  const canMakeupYesterday = !completed[yesterdayStr] && yesterdayStr >= startDate;
+  const yesterdayInfo = useMemo(() => {
+    const dsa = Math.max(0, daysBetween(anchorDate, yesterdayStr));
+    const dis = countDeferredInRange(autoPostponed, anchorDate, yesterdayStr);
+    const ed = Math.max(0, dsa - dis);
+    const wn = totalWeeks > 0 ? Math.min(totalWeeks, anchorWeek + Math.floor(ed / 7)) : 0;
+    return getFocusForToday(yesterday, blocks, wn, {
+      scalesRotationPool,
+      effectiveDays: ed,
+      scalesFallbackLabel,
+    });
+  }, [yesterday, yesterdayStr, anchorDate, anchorWeek, autoPostponed, totalWeeks, blocks, scalesRotationPool, scalesFallbackLabel]);
+  const yesterdayDateLabel = useMemo(
+    () => yesterday.toLocaleDateString(locale === 'en' ? 'en-US' : 'zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }),
+    [yesterday, locale],
+  );
+  const yesterdayDateShort = useMemo(
+    () => yesterday.toLocaleDateString(locale === 'en' ? 'en-US' : 'zh-CN', { month: 'short', day: 'numeric' }),
+    [yesterday, locale],
+  );
+
   const plannedDefaultLogMinutes = useMemo(() => {
     const [y, mo, d] = todayStr.split('-').map(Number);
     const anchor = getPracticeDayAnchor(new Date(y, mo - 1, d, 12, 0, 0, 0));
@@ -368,13 +398,35 @@ export default function PianoApp() {
     setLogModal(true);
   }
 
+  function openMakeupYesterday() {
+    if (!canMakeupYesterday) return;
+    setPracticeLogMode('makeup');
+    setLogNote('');
+    setLogDuration(defaultLogMinutesFromTodayInfo(yesterdayInfo));
+    setLogModal(true);
+  }
+
   function handleUndoTodayLog() {
     setAppDialog({ kind: 'undoTodayLog' });
   }
 
   function handleLogPractice() {
+    if (practiceLogMode === 'makeup') {
+      // Backfill yesterday: write the log AND drop any auto-deferral for that
+      // day so week math and the header stat both reflect the recovered day.
+      const next = { ...completed, [yesterdayStr]: { duration: logDuration, note: logNote, focus: yesterdayInfo?.focus } };
+      saveCompleted(next);
+      if (autoPostponed[yesterdayStr]) {
+        const nextAuto = { ...autoPostponed };
+        delete nextAuto[yesterdayStr];
+        setAutoPostponed(nextAuto);
+        void save('autoPostponed', nextAuto);
+      }
+      setLogModal(false);
+      resetPracticeLogDraft();
+      return;
+    }
     saveCompleted({ ...completed, [todayStr]: { duration: logDuration, note: logNote, focus: todayInfo?.focus } });
-
     setLogModal(false);
     resetPracticeLogDraft();
   }
@@ -507,6 +559,10 @@ export default function PianoApp() {
             onOpenNewLog={openPracticeLogCreate}
             onEditLog={openPracticeLogEdit}
             onUndoLog={handleUndoTodayLog}
+            onMakeupYesterday={openMakeupYesterday}
+            canMakeupYesterday={canMakeupYesterday}
+            yesterdayDateLabel={yesterdayDateLabel}
+            yesterdayDateShort={yesterdayDateShort}
             today={today}
             streak={streak}
             blocks={blocks}
@@ -615,9 +671,18 @@ export default function PianoApp() {
               resetPracticeLogDraft();
             }}
           >
-            <h3 style={{ ...displayMixedItalic, fontSize: 24, marginBottom: 16, color: styles.text, fontWeight: 700 }}>
-              {practiceLogMode === 'edit' ? t('logModal.titleEdit') : t('logModal.title')}
+            <h3 style={{ ...displayMixedItalic, fontSize: 24, marginBottom: practiceLogMode === 'makeup' ? 4 : 16, color: styles.text, fontWeight: 700 }}>
+              {practiceLogMode === 'edit'
+                ? t('logModal.titleEdit')
+                : practiceLogMode === 'makeup'
+                  ? t('logModal.titleMakeup')
+                  : t('logModal.title')}
             </h3>
+            {practiceLogMode === 'makeup' && (
+              <p style={{ fontSize: 13, color: styles.textMuted, marginTop: 0, marginBottom: 16, fontFamily: '"Noto Serif SC", serif', fontWeight: 600 }}>
+                {t('logModal.makeupSubtitle', { date: yesterdayDateLabel })}
+              </p>
+            )}
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 12, letterSpacing: '0.08em', color: styles.textFaint, marginBottom: 8, display: 'block', fontFamily: '"Noto Serif SC", serif', fontWeight: 700 }}>
                 {t('logModal.durationLabel')}

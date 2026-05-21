@@ -54,6 +54,8 @@ export default {
   logModal: {
     title: 'Log practice',
     titleEdit: 'Edit today’s log',
+    titleMakeup: 'Make-up log',
+    makeupSubtitle: 'Backfilling a log for {date}; the auto-deferral on that day is removed too.',
     durationLabel: 'Duration (minutes)',
     durationMinusStepAria: 'Subtract {step} minutes',
     durationPlusStepAria: 'Add {step} minutes',
@@ -82,6 +84,8 @@ export default {
     emptyPlanHint: 'No practice segments yet. Add segments under Plan or import an archive with a route before using Today’s practice layout.',
     editLog: 'Edit log',
     undoLog: 'Undo log',
+    makeupYesterday: 'Log {date}',
+    makeupYesterdayTitle: 'Backfill a log for {date} (also cancels its auto-deferral if any)',
     dayNames: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   },
   progress: {
